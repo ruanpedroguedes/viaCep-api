@@ -1,43 +1,28 @@
-'use strict';
+const URL = "https://viacep.com.br/ws/01001000/json/";
 
-const limparFormulario = (endereco) =>{
-    document.getElementById('endereco').value = '';
-    document.getElementById('bairro').value = '';
-    document.getElementById('cidade').value = '';
-    document.getElementById('estado').value = '';
-}
+async function buscarCep() {
+    const cepInput = document.getElementById('cepInput').value;
 
+    if (/^\d{8}$/.test(cepInput)) {
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepInput}/json/`);
+            const cep = await response.json();
 
-const preencherFormulario = (endereco) =>{
-    document.getElementById('endereco').value = endereco.logradouro;
-    document.getElementById('bairro').value = endereco.bairro;
-    document.getElementById('cidade').value = endereco.localidade;
-    document.getElementById('estado').value = endereco.uf;
-}
-
-
-const eNumero = (numero) => /^[0-9]+$/.test(numero);
-
-const cepValido = (cep) => cep.length == 8 && eNumero(cep); 
-
-const pesquisarCep = async() => {
-    limparFormulario();
-    
-    const cep = document.getElementById('cep').value.replace("-","");
-    const url = `https://viacep.com.br/ws/${cep}/json/`;
-    if (cepValido(cep)){
-        const dados = await fetch(url);
-        const endereco = await dados.json();
-        if (endereco.hasOwnProperty('erro')){
-            document.getElementById('endereco').value = 'CEP não encontrado!';
-        }else {
-            preencherFormulario(endereco);
+            if (cep.erro) {
+                document.getElementById('resultado').innerHTML = '<p>CEP não encontrado.</p>';
+            } else {
+                document.getElementById('resultado').innerHTML = `
+                    <h2>Informações do CEP ${cepInput}:</h2>
+                    <p>Logradouro: ${cep.logradouro}</p>
+                    <p>Bairro: ${cep.bairro}</p>
+                    <p>Cidade: ${cep.localidade}</p>
+                    <p>Estado: ${cep.uf}</p>
+                `;
+            }
+        } catch (error) {
+            document.getElementById('resultado').innerHTML = `<p>Erro na consulta do CEP: ${error.message}</p>`;
         }
-    }else{
-        document.getElementById('endereco').value = 'CEP incorreto!';
+    } else {
+        document.getElementById('resultado').innerHTML = '<p>CEP inválido. Digite um CEP válido com 8 dígitos.</p>';
     }
-     
 }
-
-document.getElementById('cep')
-        .addEventListener('focusout',pesquisarCep);
